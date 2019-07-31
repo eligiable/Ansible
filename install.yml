@@ -1,0 +1,41 @@
+---
+- hosts: AnsibleTest
+  user: admin
+  become: yes
+  become_method: sudo
+
+  roles:
+  - addrepo
+  - nginx
+  - php
+  - mysql
+  - composer
+  - magento
+  - redis
+  - mongodb
+  - algolia
+  - importmagento
+  - quanta
+  - cron
+  - varnish
+  - elastic-search
+  - postfix
+  # - memcache
+
+  tasks:
+  - name: Compile Magento
+    command: php /var/www/magento2/bin/magento setup:di:compile
+    ignore_errors: yes
+
+  - name: Edit fpm, cli /php.ini and config.php
+    command: sh /tmp/{{ item }}
+    become: yes
+    become_method: sudo
+    with_items:
+    - config.sh
+
+  - name: Restart Nginx
+    action: service name=nginx state=restarted enabled=true
+
+  - name: Restart PHP 7.0
+    action: service name=php7.0-fpm state=restarted enabled=true
