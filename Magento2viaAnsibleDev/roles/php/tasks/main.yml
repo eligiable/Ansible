@@ -1,0 +1,48 @@
+---
+  - name: Install PHP 7.0-fpm
+    apt: pkg={{ item }} state=present update_cache=yes
+    with_items:
+    - php7.0-fpm
+    - php7.0-mysql
+    - php7.0-bcmath
+    - php7.0-curl
+    - php7.0-xml
+    - php7.0-gd
+    - php7.0-intl
+    - php7.0-mbstring
+    - php7.0-mcrypt
+    - php7.0-soap
+    - php7.0-zip
+    - php7.0-cli
+    - php-mongodb
+    - php-pear
+    - php7.0-dev
+    - php7.0-opcache
+
+  - name: Create PHP opcache Error Log
+    file: path=/var/log/phpopcache.error.log state=touch mode="u+rw,g+r,o+r"
+    ignore_errors: yes
+
+  - name: Change PHP.ini Permissions to Full
+    command: chmod 777 /etc/php/7.0/fpm/php.ini
+
+  - name: Add opcache Configuration to PHP.ini
+    shell: echo "{{ item }}" >> /etc/php/7.0/fpm/php.ini
+    with_items:
+    - opcache.enable=1
+    - opcache.enable_cli=0
+    - opcache.memory_consumption=256
+    - opcache.interned_strings_buffer=12
+    - opcache.max_accelerated_files=65406
+    - opcache.validate_timestamps=1
+    - opcache.fast_shutdown=1
+    - opcache.enable_file_override=1
+    - opcache.error_log=/var/log/phpopcache.error.log
+    - opcache.log_verbosity_level=3
+
+  - name: Again change PHP.ini Permission to Full
+    command: chmod 644 /etc/php/7.0/fpm/php.ini
+
+  - name: Restart PHP
+    service: name=php7.0-fpm state=restarted
+    ignore_errors: yes

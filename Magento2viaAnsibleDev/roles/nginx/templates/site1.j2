@@ -1,0 +1,43 @@
+map $http_host $MAGE_RUN_CODE {
+     {{ item.server_name }}  {{ item.name }};
+}
+
+server {
+     listen 80;
+     server_name {{ item.server_name }};
+     
+     access_log /var/log/nginx/{{ item.server_name }}.access.log;
+     error_log /var/log/nginx/{{ item.server_name }}.error.log;
+
+     set $MAGE_ROOT {{ magento_dir }};
+     set $MAGE_MODE default;
+
+     location /status {
+        stub_status on;
+        allow 127.0.0.0/8;
+        deny all;
+     }
+
+     include {{ magento_dir }}/nginx.conf.sample;
+}
+
+server {
+     listen 443;
+     server_name {{ item.server_name }};
+
+     ssl                   on;
+     ssl_certificate       {{ ssl_certificate }};
+     ssl_certificate_key   {{ ssl_key }};
+
+     access_log /var/log/nginx/{{ item.server_name }}.access.log;
+     error_log /var/log/nginx/{{ item.server_name }}.error.log;
+
+     location / {
+        proxy_pass                           http://127.0.0.1:80/;
+        proxy_set_header X-Real-IP           $remote_addr;
+        proxy_set_header X-Forwarded-For     $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto   https;
+        proxy_set_header X-Forwarded-Port    443;
+        proxy_set_header Host                $host;
+     }
+}

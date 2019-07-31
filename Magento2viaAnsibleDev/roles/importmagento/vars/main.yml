@@ -1,0 +1,8 @@
+---
+git_home: /home/admin/magento/
+magento_dir: /var/www/magento2
+host_ipaddress: 192.168.1.236
+repo_address: git@UTR/magento2.git
+user: admin
+group: admin
+

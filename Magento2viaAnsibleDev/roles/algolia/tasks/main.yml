@@ -1,0 +1,3 @@
+---
+  - name: Install Algolia using Composer
+    command: composer require algolia/algoliasearch-magento-2 chdir={{ magento_dir }}

@@ -1,0 +1,34 @@
+---
+  - name: Add apt Key
+    apt_key: keyserver=keyserver.ubuntu.com id=EA312927
+
+  - name: Add MongoDB in OS Sources
+    file: path={{ mogodb_source }} state=touch
+
+  - name: Add MongoDB deb
+    apt_repository: repo="deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" filename={{ mogodb_source }}
+
+  - name: Update Cache
+    apt: update_cache=yes
+
+  - name: Install MongoDB
+    apt: pkg={{ item }} state=present update_cache=yes
+    with_items:
+    - mongodb-org
+    - mongodb-org-server
+    - mongodb-org-shell
+    - mongodb-org-mongos
+    - mongodb-org-tools
+    - pkg-config
+    - libssl-dev
+    - libsslcommon2-dev
+
+  - name : Compile MongoDB using pecl Extension
+    command: pecl install mongodb
+    ignore_errors: yes
+
+  - name: Install MongoDB PHP Extension
+    command: echo "extension=mongodb.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
+
+  - name: Installing MongoDB Composer Extension
+    command: composer require "mongodb/mongodb=^1.0.0" chdir={{ magento_dir }}

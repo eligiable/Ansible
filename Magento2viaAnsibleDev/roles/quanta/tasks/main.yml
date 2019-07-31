@@ -1,0 +1,29 @@
+---
+  - name: Add Quanta deb
+    apt_repository: repo="deb http://apt.quanta.gr quanta/"
+
+  - name: Add Quanta key
+    apt_key: url="https://www.quanta-monitoring.com/quanta-repo-key.gpg" validate_certs=False state=present
+
+  - name: Update Cache
+    apt: update_cache=yes
+
+  - name: Install Quanta Dependinces
+    apt: pkg=libvarnishapi1 state=present
+
+  - name: Download libmysqlclient18
+    get_url: url="http://launchpadlibrarian.net/212189159/libmysqlclient18_5.6.25-0ubuntu1_amd64.deb" dest=/tmp/
+
+  - name: Install libmysqlclient18
+    command: dpkg -i libmysqlclient18_5.6.25-0ubuntu1_amd64.deb chdir=/tmp/
+
+  - name: Install Quanta Agents
+    apt: pkg={{ item }} state=present update_cache=yes
+    with_items:
+    - quanta-agent
+    - quanta-agent-mysql
+    - quanta-agent-nginx
+    - quanta-agent-varnish
+    - quanta-agent-redis
+    - quanta-agent-memcached
+    - php70-quanta-mon

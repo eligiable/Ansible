@@ -1,0 +1,45 @@
+---
+src_nginx_conf_dir: ../templates
+dest_nginx_conf_dir: /etc/nginx/sites-available
+magento_dir: /var/www/magento2
+ssl_certificate: /etc/ssl/certs/example.com.pem
+ssl_key: /etc/ssl/private/example.com.key
+nginx_enabled_dir: /etc/nginx/sites-enabled
+ssl_pem_src: ../../tmp/example.com.pem
+ssl_pem_dest: /etc/ssl/certs/example.com.pem
+ssl_key_src: ../../tmp/example.com.key
+ssl_key_dest: /etc/ssl/private/example.com.key
+
+domains:
+ - int-en-ae.example.com
+ - int-ar-ae.example.com
+ - int-en-sa.example.com
+ - int-ar-sa.example.com
+ - int-en-om.example.com
+ - int-ar-om.example.com
+ - int-en-bh.example.com
+ - int-ar-bh.example.com
+ - int-en-kw.example.com
+ - int-ar-kw.example.com
+ - int-ar.example.com
+ - int-en.example.com
+ - int-www.example.com
+
+nginx_vhosts: [
+ { server_name: "int-en.example.com", name: "en" },
+ { server_name: "int-ar.example.com", name: "ar" },
+ { server_name: "int-en-ae.example.com", name: "en_ae" },
+ { server_name: "int-ar-ae.example.com", name: "ar_ae" },
+ { server_name: "int-en-sa.example.com", name: "en_sa" },
+ { server_name: "int-ar-sa.example.com", name: "ar_sa" },
+ { server_name: "int-en-om.example.com", name: "en-om" },
+ { server_name: "int-ar-om.example.com", name: "ar_om" },
+ { server_name: "int-en-bh.example.com", name: "en_bh" },
+ { server_name: "int-ar-bh.example.com", name: "ar_bh" },
+ { server_name: "int-en-kw.example.com", name: "en_kw" },
+ { server_name: "int-ar-kw.example.com", name: "ar-kw" },
+]
+
+nginx_vhosts2: [
+ { server_name2: "int-www.example.com", name2: "admin" },
+]

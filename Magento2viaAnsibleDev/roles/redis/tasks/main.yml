@@ -1,0 +1,12 @@
+---
+  - name: Install Redis Dependencies
+    apt: pkg={{ item }} state=present update_cache=yes
+    with_items:
+    - build-essential
+    - tcl8.5
+
+  - name: Run Script to Install Redis
+    command: sh {{ item }}
+    with_items:
+    - "{{ redis_script }}"
+

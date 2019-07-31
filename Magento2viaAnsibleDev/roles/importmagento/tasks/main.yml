@@ -1,0 +1,113 @@
+---
+  - name: Create GIT Home Directory
+    file: path={{ item }} state=directory owner={{ user }} group={{ group }}
+    with_items:
+    - "{{ git_home }}"
+
+  - name: Change Owner of the .ssh Directory
+    command: chown -R {{ user }}:{{ group }} /home/{{ user }}/.ssh/
+
+  - name: Clone GIT to Get Magento
+    become: no
+    git:
+      repo: "{{ repo_address }}"
+      dest: "{{ git_home }}"
+      accept_hostkey: yes
+      force: yes
+      recursive: no
+      clone: yes
+
+  - name: Sync Magneto Files
+    synchronize: src={{ git_home }}/modules/{{ item }}/src/php/ dest={{ magento_dir }} recursive=yes
+    delegate_to: "{{ host_ipaddress }}"
+    with_items:
+    - Ctv_AdminActivity
+    - Ctv_AdminGrid
+    - Ctv_AlgoliaSearch_Local
+    - Ctv_Cartrule
+    - Ctv_Cod_Local
+    - Ctv_Core
+    - Ctv_Esb
+    - Ctv_Indexer
+    - Ctv_Local
+    - Ctv_Migration
+    - Ctv_MongoDB
+    - Ctv_MultiStock
+    - Ctv_On_Air
+    - Ctv_Payfort_Fort_Local
+    - Ctv_Publish
+    - Ctv_Redirect
+    - Ctv_Sapstock
+    - Ctv_Silverpop
+    - Ctv_WebService
+    - data-migration-tool
+    - Magento2.1.1_Core_Fixes
+    - Magestore_Shopbybrand
+    - Payfort_Fort
+    - Web_Design_v5_Ctv
+    - Web_Design_v5_FastestTheme
+
+  - name: Install Modules using Composer
+    command: composer require ebizmarts/magento2-{{ item }}
+    with_items:
+    - magemonkey
+    - mandrill
+    - abandonedcart
+    - autoresponder
+
+  - name: Enable Magento Modules
+    command: php {{ magento_dir }}/bin/magento module:enable {{ item }} --clear-static-content
+    with_items:
+    - Algolia_AlgoliaSearch
+    - Ctv_AdminActivity
+    - Ctv_AdminGrid
+    - Ctv_Cartrule
+    - Ctv_Cod
+    - Ctv_Core
+    - Ctv_Esb
+    - Ctv_Indexer
+    - Ctv_Local
+    - Ctv_Migration
+    - Ctv_MongoDB
+    - Ctv_MultiStock
+    - Ctv_OnAir
+    - Ctv_Payfort
+    - Ctv_Publish
+    - Ctv_Redirect
+    - Ctv_Sapstock
+    - Ctv_Silverpop
+    - Ctv_WebService
+    - Magestore_Shopbybrand
+    - Payfort_Fort
+    - Ctv_ThemeV5
+    - Codazon_AjaxCartPro
+    - Codazon_MegaMenu
+    - Codazon_ProductFilter
+    - Codazon_ProductLabel
+    - Codazon_QuickShop
+    - Codazon_Slideshow
+    - Codazon_ThemeOptions
+    - Magefan_Blog
+    - Sebwite_SmartSearch
+
+  - name: Upgrade Magento
+    command: php {{ magento_dir }}/bin/magento setup:upgrade
+    ignore_errors: yes
+
+  - name: Deploy Content
+    command: php {{ magento_dir }}/bin/magento setup:static-content:deploy
+    ignore_errors: yes
+
+  - name: Change Directory Permissions
+    file: path={{ magento_dir }}/{{ item }} state=directory mode=0777 recurse=yes
+    with_items:
+    - app/etc
+    - var
+    - pub
+    - vendor
+
+  - name:
+    command: chmod u+x /var/www/magento2/bin/magento
+
+  - name: Change Owner
+    file: path={{ magento_dir }} owner=www-data group=www-data state=directory recurse=yes

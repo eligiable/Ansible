@@ -1,0 +1,49 @@
+---
+  - name: Create Composer and Magento Directory
+    file: path={{ item }} state=directory mode=0777
+    with_items:
+    - "{{ composer_dir }}"
+#    - "{{ magento_dir }}"
+
+  - name: Copy Authentication Files
+    copy: src={{ auth_file }} dest={{ composer_dir }}/auth.json owner={{ owner }} group={{ group }}
+
+  - name: Run Script to Download Magento
+    command: sh {{ item }}
+    with_items:
+    - "{{ magento_download }}"
+    ignore_errors: yes
+
+  - name: Change Directory Permissions
+    file: path={{ magento_dir }}/{{ item }} state=directory mode=0777 recurse=yes
+    with_items:
+    - app/etc
+    - var
+    - pub
+    - vendor
+
+  - name:
+    command: chmod u+x {{ magento_dir }}/bin/magento
+
+  - name: Run Script to Install Magento
+    command: sh {{ item }}
+    with_items:
+    - "{{ magento_script }}"
+    ignore_errors: yes
+
+#  - name: Extract Magento Database
+#    command: gzip -d {{ sql_src_file }}
+
+  - name: Import Magento Database
+    mysql_db: state=import name={{ db_name }} target={{ sql_target_file }} login_user={{ login_user }} login_password={{ login_password }}
+
+  - name: Change Owner
+    file: path={{ magento_dir }} owner=www-data group=www-data state=directory recurse=yes
+
+  - name: Adjusting Magento Links
+    command: sh {{ item }}
+    with_items:
+    - "{{ mysql_script }}"
+
+  - name: Copy Nginx Sample for Magento
+    copy: src={{ nginx_sample }} dest={{ magento_dir }}/nginx.conf.sample

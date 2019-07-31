@@ -1,0 +1,11 @@
+---
+  - name: Install Composer
+    apt: pkg=git state=installed update_cache=true
+    with_items:
+    - curl
+
+  - name: Run Script to Install Composer
+    command: sh {{ item }}
+    with_items:
+    - "{{ composer_script }}"
+

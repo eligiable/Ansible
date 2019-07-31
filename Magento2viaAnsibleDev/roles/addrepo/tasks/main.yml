@@ -1,0 +1,27 @@
+---
+  - name: Add Nginx and PHP Repo to Install Nginx 1.10.x and PHP 7.0
+    apt_repository: repo={{ item }} state=present
+    with_items:
+    - 'ppa:ondrej/php'
+    - 'ppa:nginx/stable'
+
+  - name: Update Cache
+    apt: update_cache=yes
+
+  - name: Copy Files in Temp with Execution Mode
+    copy: src=../../tmp/{{ item }} dest=/tmp mode=0777
+    with_items:
+    - auth.json
+    - config.sh
+    - downloadmagento.sh
+    - installcomposer.sh
+    - installmagento2.sh
+    - installredis.sh
+    - mysqlscript.sh
+
+  - name: Copy Files in Temp No Execution Mode
+    copy: src=../../tmp/{{ item }} dest=/tmp
+    with_items:
+    - magentodb.sql
+    - nginx.conf.sample
+    
