@@ -1,4 +1,4 @@
-# Bash
+# Ansible
 Ansible Scripts to Automate
 
 ### Magento2 via Ansible
