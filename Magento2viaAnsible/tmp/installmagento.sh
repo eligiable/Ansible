@@ -1,0 +1,18 @@
+/var/www/magento2/bin/magento setup:install --backend-frontname="adminlogin" \
+--db-host="localhost" \
+--db-name="magentodb" \
+--db-user="magento" \
+--db-password="Password" \
+--language="en_US" \
+--currency="USD" \
+--timezone="Asia/Dubai" \
+--use-rewrites=1 \
+--use-secure=0 \
+--base-url="http://192.168.1.236" \
+--base-url-secure="https://192.168.1.236" \
+--admin-user=admin \
+--admin-password=password \
+--admin-email=it-support@example.com \
+--admin-firstname=User_FirstName \
+--admin-lastname=User_LastName \
+--cleanup-database

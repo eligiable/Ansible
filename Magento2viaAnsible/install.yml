@@ -1,0 +1,158 @@
+---
+- hosts: AnsibleTest
+  user: admin
+  become: yes
+  become_method: sudo
+  tasks:
+
+  - name: Update Cache
+    apt: update_cache=yes
+
+  - name: Install Nginx
+    apt: pkg=nginx state=installed update_cache=true
+
+  - name: Install PHP 7
+    apt: name={{item}} state=installed update_cache=true
+    with_items:
+    - php7.0-fpm
+    - php7.0-mcrypt
+    - php7.0-curl
+    - php7.0-cli
+    - php7.0-mysql
+    - php7.0-gd
+    - php7.0-xsl
+    - php7.0-json
+    - php7.0-intl
+    - php-pear
+    - php7.0-dev
+    - php7.0-common
+    - php7.0-mbstring
+    - php7.0-zip
+    - php-soap
+    - libcurl3
+    - curl
+    - git
+    - php7.0-bcmath
+
+  - name: Copy Scripts in Temp
+    copy: src=tmp/{{ item }} dest=/tmp mode=0777
+    with_items:
+    - config.sh
+    - installcomposer.sh
+    - installmagento.sh
+
+  - name: Copy Files in Temp
+    copy: src=tmp/{{ item }} dest=/tmp
+    with_items:
+    - config.sh
+    - magento
+    - magentodb.sql
+    - Magento-EE-2.1.4-2017-01-31-02-51-02.tar.bz2
+    - media.tar.gz
+
+  - name: Edit fpm and cli /php.ini
+    command: sh /tmp/{{ item }}
+    become: yes
+    become_method: sudo
+    with_items:
+    - config.sh
+
+  - name: Delete Nginx default
+    command: sudo rm -rf /etc/nginx/sites-available/default
+
+  - name: Replace Nginx default
+    copy: src=tmp/default dest=/etc/nginx/sites-available/
+
+  - name: Retart Nginx
+    action: service name=nginx state=restarted enabled=true
+
+  - name: Install MySQL
+    apt: name={{item}} state=installed update_cache=true
+    with_items:
+    - mysql-server
+    - mysql-client
+
+  - name: Install python-mysqldb
+    apt: name=python-mysqldb state=installed
+
+  - name: Install Varnish
+    apt: pkg=varnish state=installed update_cache=true
+
+  - name: Create Magento2 Database
+    mysql_db: login_user=root login_password=MagentoToor name=magentodb state=present collation=utf8_general_ci encoding=utf8
+
+  - name: Add Deploy DB User and Allow Access to the Server
+    mysql_user: name=magento password=magento@ host="%" priv=magentodb.*:ALL,GRANT check_implicit_admin=yes login_user=root login_password=MagentoToor state=present
+
+  - name: Configure Varnish
+    command: sudo cp /lib/systemd/system/varnish.service /etc/systemd/system/
+
+  - name: Install Postfix
+    apt: pkg=postfix state=installed update_cache=true
+
+  - name: Install Composer
+    command: sh /tmp/{{ item }}
+    with_items:
+    - installcomposer.sh
+
+  - name: Create Magento Directory
+    file: path=/var/www/magento2 state=directory
+
+  - name: Extract Magento2 Archive
+    unarchive: src=/tmp/Magento-EE-2.1.4-2017-01-31-02-51-02.tar.bz2 dest=/var/www/magento2 copy=no
+
+  - name: Change Magento2 Directory Permission and Owner
+    file: path=/var/www/magento2/{{ item }} state=directory mode=0777 recurse=yes
+    become: yes
+    become_method: sudo
+    with_items:
+    - app/etc
+    - var
+    - pub/static
+    - vendor
+
+  - name: 
+    command: chmod u+x /var/www/magento2/bin/magento
+    become: yes
+    become_method: sudo
+
+  - name: Move Magento Config to Nginx
+    copy: src=tmp/magento dest=/etc/nginx/sites-available/
+
+  - name: Link Magento Config to Nginx
+    command: ln -s /etc/nginx/sites-available/magento /etc/nginx/sites-enabled/
+    become: yes
+    become_method: sudo
+
+  - name: Retart Nginx
+    action: service name=nginx state=restarted enabled=true
+
+  - name: Run Composer
+    command: composer install -v chdir=/var/www/magento2/
+
+  - name: Install Magento
+    command: sh /tmp/{{ item }}
+    with_items:
+    - installmagento.sh
+
+  - name: Change Magento2 Directory Permission and Owner
+    file: path=/var/www/magento2 owner=www-data group=www-data state=directory recurse=yes
+
+  - name: Extract Media Archive
+    unarchive: src=/tmp/media.tar.gz dest=/var/www/magento2/pub copy=no
+
+  - name: Import Magento2 Database Dump
+    mysql_db: login_user=root login_password=MagentoToor name=magentodb state=import target=/tmp/magentodb.sql
+
+  - name: Retart Nginx
+    action: service name=nginx state=restarted enabled=true
+
+  - name: Upgrade Magento
+    command: php /var/www/magento2/bin/magento setup:upgrade
+    become: yes
+    become_method: sudo
+
+  - name: Compile Magento
+    command: php /var/www/magento2/bin/magento setup:di:compile
+    become: yes
+    become_method: sudo
