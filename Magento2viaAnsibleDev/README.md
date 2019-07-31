@@ -42,7 +42,7 @@ nano authorized_keys
 ### 2. Getting the Script
 ```bash
 cd ~/
-git clone https://team-it@pm.citrusstv.com:8484/team-it/Magento2viaAnsibleDev.git
+git clone https://github.com/eligiable/Ansible.git
 ```
 
 ### 3. Changes to be made in the Script (MUST DO)
@@ -70,7 +70,7 @@ nano inventory.ini
 
 #### Run the Script
 ```bash
-sudo ansible-playbook -i inventory.ini install.yml --user administrator --ask-become-pass
+sudo ansible-playbook -i inventory.ini install.yml --user admin--ask-become-pass
 ```
 --ask-become-pass is a Security Level to ask the Client's User Password Again
 
