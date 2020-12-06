@@ -8,3 +8,7 @@ Ansible Scripts to Automate
 ### Magento2 via Ansible - Development Env.
 
 > Ansible Automation Script to Deploy Customized Development Environment Installation of Magento2.
+
+### Update Ubuntu Servers from Ansible including on AWS and OpenStack
+
+> Ansible Automation Script to Deploy Customized Development Environment Installation of Magento2.
