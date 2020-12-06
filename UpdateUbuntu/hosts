@@ -1,0 +1,25 @@
+[Local]
+Atlassian ansible_host=172.31.2.46
+INT ansible_host=172.31.2.17
+GHS-Proxy ansible_host=172.31.2.55
+GIT ansible_host=172.31.2.52
+Jenkins ansible_host=172.31.2.61
+ownCloud ansible_host=172.31.2.20
+XenOrchestra ansible_host=172.31.2.38
+Zabbix ansible_host=172.31.2.39
+
+[ECommerce]
+Magento ansible_host={ip-of-the-server} ansible_ssh_user=ubuntu ansible_ssh_private_key_file=./{PEMFileName}.pem
+Database ansible_host={ip-of-the-server} ansible_ssh_user=ubuntu ansible_ssh_private_key_file=./{PEMFileName}.pem
+Cache ansible_host={ip-of-the-server} ansible_ssh_user=ubuntu ansible_ssh_private_key_file=./{PEMFileName}.pem
+
+[CCore]
+CCore-Frontend ansible_host={ip-of-the-server} ansible_ssh_user=ubuntu ansible_ssh_private_key_file=./{PEMFileName}.pem
+
+[MongoDB]
+MongoDB-Arbiter ansible_host={ip-of-the-server} ansible_ssh_user=ubuntu ansible_ssh_private_key_file=./{PEMFileName}.pem
+MongoDB-Master ansible_host={ip-of-the-server} ansible_ssh_user=ubuntu ansible_ssh_private_key_file=./{PEMFileName}.pem
+MongoDB-Slave ansible_host={ip-of-the-server} ansible_ssh_user=ubuntu ansible_ssh_private_key_file=./{PEMFileName}.pem
+
+[GHS]
+NTPnAPT ansible_host=172.16.0.3
