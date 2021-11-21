@@ -1,0 +1,9 @@
+dataDir=/opt/kafka/data/zookeeper
+clientPort=2181
+tickTime=2000
+initLimit=5
+syncLimit=2
+server.1={{ kafka1 }}:2888:3888
+server.2={{ kafka2 }}:2888:3888
+server.3={{ kafka3 }}:2888:3888
+maxClientCnxns=0
