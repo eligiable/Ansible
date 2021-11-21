@@ -1,0 +1,33 @@
+---
+
+# Kafka Home Director
+kafka_home: /opt/kafka
+
+# Data Directories for all 2 Zookeeper Instances
+zk_data_dir: "{{ kafka_home }}/data/zookeeper"
+
+# Data Directories for all Kafka Instances
+kafka_data_dir: "{{ kafka_home }}/data/kafka-logs"
+
+# Kafka Temp Directory
+kafka_temp_dir: /tmp/kafka
+
+# Kafka Logs Directory
+kafka_home_logs: "{{ kafka_home }}/logs"
+
+# Kafka Source Binaries
+kafka_dist_file: kafka_2.13-2.6.2.tgz
+
+# OS Distribution Path
+Debian_service_path: /lib/systemd/system
+RedHat_service_path: /usr/lib/systemd/system
+
+# Kafka Hostnames
+server1: server_name1
+server2: server_name2
+server3: server_name3
+
+# Kafka Hosts
+kafka1: 192.168.0.2
+kafka2: 192.168.0.3
+kafka3: 192.168.0.4
