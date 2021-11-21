@@ -1,0 +1,15 @@
+- name: Stopping Kafka Services
+  service:
+    name: "{{ item }}"
+    state: stopped
+  become: true
+  loop:
+    - kafka
+
+- name: Stopping Zookeeper Services
+  service:
+    name: "{{ item }}"
+    state: stopped
+  become: true
+  loop:
+    - zookeeper
