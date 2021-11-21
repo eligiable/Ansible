@@ -1,0 +1,191 @@
+- name: Debian - Update the System
+  apt:
+    name: '*'
+    state: latest
+    update_cache: yes
+    only_upgrade: yes
+  register: apt_update_status
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Debian - Remove Packages not required anymore
+  apt:
+    autoremove: yes
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Debian - Install Java JDK and JRE
+  apt: 
+    pkg:
+    - default-jre
+    - default-jdk
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: RedHat - Update the System
+  yum:
+    name: '*'
+    state: latest
+    update_cache: yes
+    update_only: yes
+  register: yum_update_status
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: RedHat - Remove Packages not required anymore
+  yum:
+    autoremove: yes
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: RedHat - Install Java JDK and JRE
+  yum:
+    name: java-1.8.0-openjdk
+    state: present
+  become: true
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: Set Java Env. Variables
+  blockinfile:
+    path: /etc/profile
+    block: |
+      export JAVA_HOME=$(dirname $(dirname $(readlink $(readlink $(which java)))))
+      export PATH=$PATH:$JAVA_HOME/bin
+      export CLASSPATH=.:$JAVA_HOME/jre/lib:$JAVA_HOME/lib:$JAVA_HOME/lib/tools.jar
+
+- name: Load Java Env. Variables
+  shell: "source /etc/profile" 
+  args:
+    executable: /bin/bash
+
+- name: Creating System Group hadoop
+  group:
+    name: hadoop
+    state: present
+  become: true
+
+- name: Creating System Account kafka
+  user:
+    name: kafka
+    groups: hadoop
+    state: present
+    createhome: no
+  become: true
+
+- name: Creating Kafka Directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+  - "{{ kafka_home }}"
+  - "{{ kafka_temp_dir }}"
+  - "{{ kafka_home_logs }}"
+
+- name: Copying Kafka Distribution to Host from files
+  copy:
+    src: "{{ playbook_dir }}/roles/{{ role_name }}/files/{{ kafka_dist_file }}"
+    dest: "{{ kafka_temp_dir }}"
+
+- name: Extracting Kafka Distribution
+  unarchive:
+    src: "{{ kafka_temp_dir }}/{{ kafka_dist_file }}"
+    dest: "{{ kafka_home }}"
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+
+- name: Creating Kafka and Zookeeper Directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: kafka
+    group: hadoop
+    mode: 0755
+  with_items:
+  - "{{ zk_data_dir }}"
+  - "{{ kafka_data_dir }}"
+
+- name: Removing Kafka in tmp
+  file:
+    path: "{{ kafka_temp_dir }}"
+    state: absent
+  become: yes
+
+- name: Copying Kafka1 and Zookeeper1 Property Templates
+  template:
+    src: "{{ playbook_dir }}/roles/{{ role_name }}/templates/{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+  - { src: 'server1.properties.j2', dest: '{{ kafka_home }}/config/server.properties' }
+  - { src: 'myid1.j2', dest: '{{ kafka_home }}/data/zookeeper/myid' }
+  when: ansible_hostname == '{{ server1 }}'
+
+- name: Copying Kafka2 and Zookeeper2 Property Templates
+  template:
+    src: "{{ playbook_dir }}/roles/{{ role_name }}/templates/{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+  - { src: 'server2.properties.j2', dest: '{{ kafka_home }}/config/server.properties' }
+  - { src: 'myid2.j2', dest: '{{ kafka_home }}/data/zookeeper/myid' }
+  when: ansible_hostname == '{{ server2 }}'
+
+- name: Copying Kafka3 and Zookeeper3 Property Templates to config
+  template:
+    src: "{{ playbook_dir }}/roles/{{ role_name }}/templates/{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+  - { src: 'server3.properties.j2', dest: '{{ kafka_home }}/config/server.properties' }
+  - { src: 'myid3.j2', dest: '{{ kafka_home }}/data/zookeeper/myid' }
+  when: ansible_hostname == '{{ server3 }}'
+
+- name: Copying Zookeeper Property Templates to config
+  template:
+    src: "{{ playbook_dir }}/roles/{{ role_name }}/templates/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: kafka
+    group: hadoop
+    mode: 0755
+  with_items:
+  - { src: 'zookeeper.properties.j2', dest: '{{ kafka_home }}/config/zookeeper.properties' }
+
+- name: Debian - Copying Kafka and Zookeeper Service Tamplates to system
+  template:
+    src: "{{ playbook_dir }}/roles/{{ role_name }}/templates/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+  - { src: 'kafka.service', dest: "{{ Debian_service_path }}" }
+  - { src: 'zookeeper.service', dest: "{{ Debian_service_path }}" }
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: RedHat - Copying Kafka and Zookeeper Service Tamplates to system
+  template:
+    src: "{{ playbook_dir }}/roles/{{ role_name }}/templates/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0755
+  with_items:
+  - { src: 'kafka.service', dest: "{{ RedHat_service_path }}" }
+  - { src: 'zookeeper.service', dest: "{{ RedHat_service_path }}" }
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+- name: chown Kafka Directories
+  file:
+    path: "{{ item }}"
+    owner: kafka
+    group: hadoop
+    recurse: yes
+    mode: 0755
+  become: yes
+  with_items:
+  - "{{ kafka_home }}"
+
+- name: Waiting for the Deamon to be Reloaded
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Starting Kafka and Zookeeper Services
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  become: true
+  loop:
+    - kafka
