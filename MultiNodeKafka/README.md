@@ -1,4 +1,4 @@
-# UAE-KafkaDeployment
+# Kafka Deployment with Zookeeper
 On-Prem/Data Center Kafka + Zookeeper Multi-Node (Clustered) Deployment on 3 Servers having [3 (Kafka Brokers) + 3 (Zookeepers)]
 
 **Important | Change Hostname and IPs**
