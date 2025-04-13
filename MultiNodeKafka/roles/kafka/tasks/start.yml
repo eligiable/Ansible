@@ -1,8 +1,0 @@
-- name: Starting Kafka and Zookeeper Services
-  service:
-    name: "{{ item }}"
-    state: started
-    enabled: true
-  become: true
-  loop:
-    - kafka
