@@ -1,0 +1,58 @@
+---
+- name: Create Zookeeper user and group
+  user:
+    name: zookeeper
+    group: zookeeper
+    system: yes
+    shell: /bin/false
+
+- name: Create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: zookeeper
+    group: zookeeper
+    mode: '0755'
+  loop:
+    - "{{ base_dir }}"
+    - "{{ zookeeper_data_dir }}"
+    - "{{ zookeeper_config_dir }}"
+    - "{{ log_dir }}/zookeeper"
+
+- name: Download and extract Zookeeper
+  unarchive:
+    src: "{{ zookeeper_url }}"
+    dest: "{{ base_dir }}"
+    remote_src: yes
+    owner: zookeeper
+    group: zookeeper
+    extra_opts: ["--strip-components=1"]
+
+- name: Configure Zookeeper
+  template:
+    src: "zoo.cfg.j2"
+    dest: "{{ zookeeper_config_dir }}/zoo.cfg"
+    owner: zookeeper
+    group: zookeeper
+    mode: '0640'
+
+- name: Create myid file
+  copy:
+    content: "{{ zookeeper_id }}"
+    dest: "{{ zookeeper_data_dir }}/myid"
+    owner: zookeeper
+    group: zookeeper
+    mode: '0640'
+
+- name: Configure Zookeeper systemd service
+  template:
+    src: "zookeeper.service.j2"
+    dest: "{{ systemd_path }}/zookeeper.service"
+    mode: '0644'
+
+- name: Reload systemd and enable Zookeeper service
+  systemd:
+    name: zookeeper
+    daemon_reload: yes
+    enabled: yes
+    state: started

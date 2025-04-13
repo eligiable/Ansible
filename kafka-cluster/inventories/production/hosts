@@ -1,0 +1,13 @@
+[zookeepers]
+zk1.example.com
+zk2.example.com
+zk3.example.com
+
+[kafka_brokers]
+kafka1.example.com
+kafka2.example.com
+kafka3.example.com
+
+[kafka_cluster:children]
+zookeepers
+kafka_brokers

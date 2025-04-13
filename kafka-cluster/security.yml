@@ -1,0 +1,74 @@
+---
+- name: Generate security artifacts for Kafka cluster
+  hosts: kafka_cluster
+  become: yes
+  vars:
+    ca_cert_days: 3650
+    node_cert_days: 365
+  tasks:
+    - name: Ensure SSL directories exist
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0750'
+      loop:
+        - /etc/ssl/private
+        - /etc/ssl/certs
+
+    - name: Generate CA private key (run once)
+      openssl_privatekey:
+        path: /etc/ssl/private/kafka-ca.key
+        owner: root
+        group: root
+        mode: '0600'
+      delegate_to: "{{ groups['kafka_brokers'][0] }}"
+      run_once: yes
+
+    - name: Generate CA certificate (run once)
+      openssl_certificate:
+        path: /etc/ssl/certs/kafka-ca.crt
+        privatekey_path: /etc/ssl/private/kafka-ca.key
+        csr_path: /tmp/kafka-ca.csr
+        provider: selfsigned
+        selfsigned_not_after: "+{{ ca_cert_days }}d"
+        subject:
+          C: "US"
+          ST: "California"
+          L: "San Francisco"
+          O: "Example Corp"
+          OU: "Kafka Cluster"
+          CN: "Kafka CA"
+      delegate_to: "{{ groups['kafka_brokers'][0] }}"
+      run_once: yes
+
+    - name: Distribute CA certificate
+      copy:
+        src: /etc/ssl/certs/kafka-ca.crt
+        dest: /etc/ssl/certs/kafka-ca.crt
+        owner: root
+        group: root
+        mode: '0644'
+      when: inventory_hostname != groups['kafka_brokers'][0]
+
+    - include_role:
+        name: security
+        tasks_from: zookeeper_keystore.yml
+      when: inventory_hostname in groups['zookeepers']
+
+    - include_role:
+        name: security
+        tasks_from: kafka_keystore.yml
+      when: inventory_hostname in groups['kafka_brokers']
+
+    - name: Configure firewall rules
+      firewalld:
+        service: "{{ item }}"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      loop:
+        - zookeeper-client
+        - zookeeper-peer
+        - zookeeper-leader
+        - kafka
+        - kafka-ssl

@@ -1,0 +1,14 @@
+---
+- name: restart kafka
+  systemd:
+    name: kafka
+    state: restarted
+    daemon_reload: yes
+  when: ansible_service_mgr == "systemd"
+
+- name: reload kafka
+  systemd:
+    name: kafka
+    state: reloaded
+    daemon_reload: yes
+  when: ansible_service_mgr == "systemd"

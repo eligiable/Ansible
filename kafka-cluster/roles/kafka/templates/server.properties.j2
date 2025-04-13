@@ -1,0 +1,34 @@
+# Broker ID and listeners
+broker.id={{ kafka_broker_id }}
+listeners=PLAINTEXT://:{{ kafka_port }}{% if security_enabled %},SSL://:{{ kafka_port_ssl }},SASL_SSL://:{{ kafka_port_sasl }}{% endif %}
+
+# Advertised listeners
+advertised.listeners=PLAINTEXT://{{ ansible_hostname }}:{{ kafka_port }}{% if security_enabled %},SSL://{{ ansible_hostname }}:{{ kafka_port_ssl }},SASL_SSL://{{ ansible_hostname }}:{{ kafka_port_sasl }}{% endif %}
+
+# Log directories
+log.dirs={{ kafka_log_dirs }}
+
+# Zookeeper connection
+zookeeper.connect={% for server in zookeeper_servers %}{{ server.host }}:{{ zookeeper_client_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
+# Replication and ISR settings
+default.replication.factor=3
+min.insync.replicas=2
+
+{% if security_enabled %}
+# Security configuration
+security.inter.broker.protocol=SASL_SSL
+ssl.client.auth=required
+ssl.truststore.location=/etc/ssl/certs/kafka.truststore.jks
+ssl.truststore.password={{ kafka_tls_truststore_password }}
+ssl.keystore.location=/etc/ssl/certs/kafka.keystore.jks
+ssl.keystore.password={{ kafka_tls_keystore_password }}
+ssl.key.password={{ kafka_tls_keystore_password }}
+sasl.mechanism.inter.broker.protocol=PLAIN
+sasl.enabled.mechanisms=PLAIN
+listener.name.sasl_ssl.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \
+  username="admin" \
+  password="admin-secret" \
+  user_admin="admin-secret" \
+  user_alice="alice-secret";
+{% endif %}

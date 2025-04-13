@@ -1,0 +1,19 @@
+[Unit]
+Description=Apache Zookeeper Server
+Documentation=http://zookeeper.apache.org
+Requires=network.target
+After=network.target
+
+[Service]
+Type=forking
+User=zookeeper
+Group=zookeeper
+Environment="JAVA_HOME={{ java_home }}"
+ExecStart={{ zookeeper_bin_dir }}/zkServer.sh start {{ zookeeper_config_dir }}/zoo.cfg
+ExecStop={{ zookeeper_bin_dir }}/zkServer.sh stop {{ zookeeper_config_dir }}/zoo.cfg
+ExecReload={{ zookeeper_bin_dir }}/zkServer.sh restart {{ zookeeper_config_dir }}/zoo.cfg
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

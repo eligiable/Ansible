@@ -1,0 +1,196 @@
+---
+- name: Validate Kafka Cluster Health
+  hosts: kafka_brokers
+  become: yes
+  vars:
+    validation_timeout: 30
+    test_topic: "validation-test-topic"
+    test_messages: 10
+  tasks:
+    - name: Check Kafka broker API availability
+      command: "{{ kafka_bin_dir }}/kafka-broker-api-versions.sh --bootstrap-server localhost:{{ kafka_port }}"
+      register: kafka_api_check
+      changed_when: false
+      retries: 5
+      delay: 5
+      until: kafka_api_check.rc == 0
+      ignore_errors: yes
+
+    - name: Verify Kafka broker is healthy
+      assert:
+        that:
+          - kafka_api_check.rc == 0
+        fail_msg: "Kafka broker API is not responding"
+        success_msg: "Kafka broker API is healthy"
+
+    - name: Create test topic for validation
+      command: >
+        {{ kafka_bin_dir }}/kafka-topics.sh --create 
+        --topic {{ test_topic }}
+        --partitions 3 --replication-factor 3
+        --bootstrap-server localhost:{{ kafka_port }}
+        --config min.insync.replicas=2
+      register: create_topic
+      changed_when: create_topic.rc == 0
+      when: inventory_hostname == groups['kafka_brokers'][0]  # Only run on first broker
+      ignore_errors: yes
+
+    - name: Check topic metadata
+      command: >
+        {{ kafka_bin_dir }}/kafka-topics.sh --describe 
+        --topic {{ test_topic }}
+        --bootstrap-server localhost:{{ kafka_port }}
+      register: topic_check
+      changed_when: false
+      retries: 3
+      delay: 5
+      until: topic_check.rc == 0
+      ignore_errors: yes
+
+    - name: Verify topic creation and configuration
+      assert:
+        that:
+          - "'Topic: {{ test_topic }}' in topic_check.stdout"
+          - "'PartitionCount: 3' in topic_check.stdout"
+          - "'ReplicationFactor: 3' in topic_check.stdout"
+        fail_msg: "Test topic was not created properly"
+        success_msg: "Test topic created successfully"
+
+    - name: Perform end-to-end producer/consumer test
+      command: >
+        {{ kafka_bin_dir }}/kafka-verifiable-producer.sh
+        --bootstrap-server localhost:{{ kafka_port }}
+        --topic {{ test_topic }} --max-messages {{ test_messages }}
+      register: producer_test
+      changed_when: false
+      when: inventory_hostname == groups['kafka_brokers'][0]  # Only run on first broker
+      ignore_errors: yes
+
+    - name: Verify message production
+      assert:
+        that:
+          - producer_test.rc == 0
+          - '"records_produced": {{ test_messages }}' in producer_test.stdout
+        fail_msg: "Message production test failed"
+        success_msg: "Successfully produced {{ test_messages }} test messages"
+
+    - name: Consume test messages
+      command: >
+        {{ kafka_bin_dir }}/kafka-verifiable-consumer.sh
+        --bootstrap-server localhost:{{ kafka_port }}
+        --topic {{ test_topic }} --max-messages {{ test_messages }}
+        --group-id validation-consumer-group
+      register: consumer_test
+      changed_when: false
+      when: inventory_hostname == groups['kafka_brokers'][0]  # Only run on first broker
+      ignore_errors: yes
+
+    - name: Verify message consumption
+      assert:
+        that:
+          - consumer_test.rc == 0
+          - '"records_consumed": {{ test_messages }}' in consumer_test.stdout
+        fail_msg: "Message consumption test failed"
+        success_msg: "Successfully consumed {{ test_messages }} test messages"
+
+    - name: Validate secure connection (if security enabled)
+      command: >
+        {{ kafka_bin_dir }}/kafka-topics.sh --list
+        --bootstrap-server localhost:{{ kafka_port_ssl }}
+        --command-config {{ kafka_config_dir }}/admin.properties
+      register: secure_connect
+      changed_when: false
+      when: 
+        - security_enabled
+        - inventory_hostname == groups['kafka_brokers'][0]  # Only run on first broker
+      ignore_errors: yes
+
+    - name: Verify secure connection works
+      assert:
+        that:
+          - secure_connect.rc == 0
+          - test_topic in secure_connect.stdout
+        fail_msg: "Secure connection test failed"
+        success_msg: "Secure connection validated successfully"
+      when: security_enabled
+
+- name: Validate Zookeeper Ensemble Health
+  hosts: zookeepers
+  become: yes
+  tasks:
+    - name: Check Zookeeper status via 'stat' command
+      command: "echo stat | nc localhost {{ zookeeper_client_port }}"
+      register: zk_stat
+      changed_when: false
+      retries: 5
+      delay: 5
+      until: "'Mode: ' in zk_stat.stdout"
+      ignore_errors: yes
+
+    - name: Verify Zookeeper node is healthy
+      assert:
+        that:
+          - "'Mode: ' in zk_stat.stdout"
+        fail_msg: "Zookeeper is not responding properly"
+        success_msg: "Zookeeper is healthy (Mode: {{ zk_stat.stdout | regex_search('Mode: .*') }})"
+
+    - name: Check Zookeeper leader/follower status
+      command: "echo srvr | nc localhost {{ zookeeper_client_port }}"
+      register: zk_srvr
+      changed_when: false
+      ignore_errors: yes
+
+    - name: Verify Zookeeper ensemble consistency
+      assert:
+        that:
+          - "'Followers: ' in zk_srvr.stdout or 'Leader: ' in zk_srvr.stdout"
+        fail_msg: "Zookeeper not participating in ensemble properly"
+        success_msg: "Zookeeper participating in ensemble ({{ zk_srvr.stdout | regex_search('Mode: .*') }})"
+
+    - name: Display Zookeeper server info
+      debug:
+        msg: "Zookeeper server info: {{ zk_srvr.stdout }}"
+
+- name: Validate Cluster Connectivity
+  hosts: localhost
+  tasks:
+    - name: Check inter-broker communication
+      command: >
+        {{ kafka_bin_dir }}/kafka-topics.sh --list
+        --bootstrap-server {{ groups['kafka_brokers'][0] }}:{{ kafka_port }}
+      register: broker_connectivity
+      changed_when: false
+      retries: 3
+      delay: 5
+      until: broker_connectivity.rc == 0
+      ignore_errors: yes
+
+    - name: Verify cluster connectivity
+      assert:
+        that:
+          - broker_connectivity.rc == 0
+          - test_topic in broker_connectivity.stdout
+        fail_msg: "Could not connect to Kafka cluster or test topic not found"
+        success_msg: "Kafka cluster connectivity is working"
+
+    - name: Clean up test topic
+      command: >
+        {{ kafka_bin_dir }}/kafka-topics.sh --delete
+        --topic {{ test_topic }}
+        --bootstrap-server {{ groups['kafka_brokers'][0] }}:{{ kafka_port }}
+      register: topic_cleanup
+      changed_when: topic_cleanup.rc == 0
+      ignore_errors: yes
+      when: inventory_hostname == groups['kafka_brokers'][0]  # Only run on first broker
+
+- name: Display Validation Summary
+  hosts: localhost
+  tasks:
+    - name: Show validation results
+      debug:
+        msg: |
+          Kafka Cluster Validation Summary:
+          - Brokers validated: {{ groups['kafka_brokers'] | length }}/3
+          - Zookeepers validated: {{ groups['zookeepers'] | length }}/3
+          - End-to-end test: {{ 'Successful' if producer_test is defined and producer_test.rc == 0 and consumer_test is defined and consumer_test.rc == 0 else 'Failed' }}
+          - Security test: {{ 'Successful' if (not security_enabled) or (secure_connect is defined and secure_connect.rc == 0) else 'Failed' }}

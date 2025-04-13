@@ -1,0 +1,12 @@
+# Admin client security configuration
+bootstrap.servers={{ groups['kafka_brokers'] | map('extract', hostvars, ['ansible_host']) | join(':9092,') }}:9092
+
+{% if security_enabled %}
+security.protocol=SASL_SSL
+ssl.truststore.location=/etc/ssl/certs/kafka.truststore.jks
+ssl.truststore.password={{ kafka_tls_truststore_password }}
+sasl.mechanism=PLAIN
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \
+  username="admin" \
+  password="admin-secret";
+{% endif %}

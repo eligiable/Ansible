@@ -1,0 +1,49 @@
+---
+- name: Install OpenSSL
+  package:
+    name: openssl
+    state: present
+
+- name: Create CA certificate
+  openssl_privatekey:
+    path: "/etc/ssl/private/kafka-ca.key"
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Generate CA certificate
+  openssl_certificate:
+    path: "/etc/ssl/certs/kafka-ca.crt"
+    privatekey_path: "/etc/ssl/private/kafka-ca.key"
+    csr_path: "/tmp/kafka-ca.csr"
+    provider: selfsigned
+    selfsigned_not_after: "+3650d"
+    subject:
+      C: "US"
+      ST: "California"
+      L: "San Francisco"
+      O: "Example Corp"
+      OU: "Kafka Cluster"
+      CN: "Kafka CA"
+    backup: yes
+
+- name: Create keystores and truststores for Zookeeper
+  include_tasks: zookeeper_keystore.yml
+  when: inventory_hostname in groups['zookeepers']
+
+- name: Create keystores and truststores for Kafka
+  include_tasks: kafka_keystore.yml
+  when: inventory_hostname in groups['kafka_brokers']
+
+- name: Configure firewall rules
+  firewalld:
+    service: "{{ item }}"
+    state: enabled
+    permanent: yes
+    immediate: yes
+  loop:
+    - zookeeper-client
+    - zookeeper-peer
+    - zookeeper-leader
+    - kafka
+    - kafka-ssl

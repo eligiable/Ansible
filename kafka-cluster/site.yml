@@ -1,0 +1,36 @@
+---
+- name: Deploy Zookeeper ensemble
+  hosts: zookeepers
+  become: yes
+  vars:
+    zookeeper_id: "{{ zookeeper_servers | selectattr('host', 'equalto', inventory_hostname) | map(attribute='id') | first }}"
+  roles:
+    - common
+    - security
+    - zookeeper
+
+- name: Deploy Kafka cluster
+  hosts: kafka_brokers
+  become: yes
+  vars:
+    kafka_broker_id: "{{ kafka_broker_ids | selectattr('host', 'equalto', inventory_hostname) | map(attribute='id') | first }}"
+  roles:
+    - common
+    - security
+    - kafka
+
+- name: Validate cluster health
+  hosts: kafka_cluster
+  become: yes
+  tasks:
+    - name: Check Zookeeper status
+      command: "echo stat | nc localhost {{ zookeeper_client_port }}"
+      register: zk_status
+      changed_when: false
+      when: inventory_hostname in groups['zookeepers']
+
+    - name: Check Kafka status
+      command: "{{ kafka_bin_dir }}/kafka-broker-api-versions.sh --bootstrap-server localhost:{{ kafka_port }}"
+      register: kafka_status
+      changed_when: false
+      when: inventory_hostname in groups['kafka_brokers']

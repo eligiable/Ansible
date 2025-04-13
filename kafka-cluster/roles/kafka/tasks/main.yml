@@ -1,0 +1,50 @@
+---
+- name: Create Kafka user and group
+  user:
+    name: kafka
+    group: kafka
+    system: yes
+    shell: /bin/false
+
+- name: Create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: kafka
+    group: kafka
+    mode: '0755'
+  loop:
+    - "{{ base_dir }}"
+    - "{{ kafka_log_dirs }}"
+    - "{{ kafka_config_dir }}"
+    - "{{ log_dir }}/kafka"
+
+- name: Download and extract Kafka
+  unarchive:
+    src: "{{ kafka_url }}"
+    dest: "{{ base_dir }}"
+    remote_src: yes
+    owner: kafka
+    group: kafka
+    extra_opts: ["--strip-components=1"]
+
+- name: Configure Kafka server.properties
+  template:
+    src: "server.properties.j2"
+    dest: "{{ kafka_config_dir }}/server.properties"
+    owner: kafka
+    group: kafka
+    mode: '0640'
+
+- name: Configure Kafka systemd service
+  template:
+    src: "kafka.service.j2"
+    dest: "{{ systemd_path }}/kafka.service"
+    mode: '0644'
+
+- name: Reload systemd and enable Kafka service
+  systemd:
+    name: kafka
+    daemon_reload: yes
+    enabled: yes
+    state: started

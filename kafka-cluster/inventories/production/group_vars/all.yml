@@ -1,0 +1,19 @@
+---
+# Common variables
+cluster_name: "production-kafka"
+ansible_user: "kafka_admin"
+systemd_path: "/etc/systemd/system"
+
+# Java settings
+java_home: "/usr/lib/jvm/java-11-openjdk"
+java_opts: "-Xms2G -Xmx2G"
+
+# Directories
+base_dir: "/opt/kafka"
+log_dir: "/var/log/kafka"
+data_dir: "/data/kafka"
+
+# Security
+security_enabled: true
+tls_enabled: true
+sasl_enabled: true
