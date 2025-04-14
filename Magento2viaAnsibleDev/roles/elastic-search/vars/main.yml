@@ -1,4 +1,0 @@
----
-src: ../templates/elastic.yml.j2
-dest: /etc/elasticsearch/elasticsearch.yml
-

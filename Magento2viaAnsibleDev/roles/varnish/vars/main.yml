@@ -1,8 +1,0 @@
----
-src_default: ../templates/default.j2
-src_varnish: ../templates/defaultvarnish.j2
-dest_default: /etc/varnish/default.vcl
-dest_varnish: /etc/default/varnish
-port_default: 80
-port_local: 80
-

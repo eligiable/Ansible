@@ -1,4 +1,0 @@
----
-magento_dir: /var/www/magento2
-mogodb_source: /etc/apt/sources.list.d/mongodb-org-3.2.list
-
