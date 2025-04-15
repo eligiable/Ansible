@@ -1,0 +1,35 @@
+---
+- name: Initialize replica set (run only on first node)
+  command: >
+    docker exec mongodb mongo -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} --eval '
+    rs.initiate({
+      _id: "{{ mongodb_replica_name }}",
+      members: [
+        { _id: 0, host: "mongodb-node1:27017" },
+        { _id: 1, host: "mongodb-node2:27017" },
+        { _id: 2, host: "mongodb-node3:27017" }
+      ]
+    })'
+  delegate_to: "{{ groups['mongodb_nodes'][0] }}"
+  run_once: true
+  register: replica_init
+  changed_when: "'\"ok\" : 1' in replica_init.stdout"
+
+- name: Wait for replica set to be ready
+  pause:
+    seconds: 30
+  when: replica_init is changed
+
+- name: Add remaining nodes to replica set (run on all nodes except first)
+  command: >
+    docker exec mongodb mongo -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} --eval '
+    rs.add("{{ inventory_hostname }}:27017")'
+  when: inventory_hostname != groups['mongodb_nodes'][0]
+  register: node_added
+  changed_when: "'\"ok\" : 1' in node_added.stdout"
+
+- name: Verify replica set status
+  command: >
+    docker exec mongodb mongo -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }} --eval 'rs.status()'
+  register: rs_status
+  changed_when: false

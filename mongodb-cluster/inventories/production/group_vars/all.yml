@@ -1,0 +1,13 @@
+---
+# MongoDB Configuration
+mongodb_version: "6.0"
+mongodb_admin_user: "admin"
+mongodb_admin_password: "SecurePassword123!"
+mongodb_replica_name: "rs0"
+mongodb_data_dir: "/var/lib/mongodb"  # Default package installation dir
+mongodb_config_dir: "/etc/mongodb"    # Default package installation dir
+mongodb_keyfile_path: "/etc/mongodb/keyfile"
+mongodb_port: 27017
+
+# Docker Configuration
+docker_compose_version: "1.29.2"

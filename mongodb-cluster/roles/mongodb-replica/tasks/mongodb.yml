@@ -1,0 +1,61 @@
+---
+- name: Create MongoDB directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: 999
+    group: 999
+    mode: '0755'
+  loop:
+    - "{{ mongodb_data_dir }}"
+    - "{{ mongodb_config_dir }}"
+
+- name: Generate keyfile for replica set authentication
+  command: openssl rand -base64 756 > {{ mongodb_keyfile_path }}
+  args:
+    creates: "{{ mongodb_keyfile_path }}"
+  when: not ansible_check_mode
+
+- name: Set keyfile permissions
+  file:
+    path: "{{ mongodb_keyfile_path }}"
+    mode: '0400'
+    owner: 999
+    group: 999
+
+- name: Update /etc/hosts with replica set members
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create Docker Compose file for MongoDB
+  template:
+    src: mongod.conf.j2
+    dest: /etc/mongodb/mongod.conf
+    owner: 999
+    group: 999
+    mode: '0644'
+
+- name: Deploy MongoDB container
+  docker_container:
+    name: mongodb
+    image: "mongo:{{ mongodb_version }}"
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "{{ mongodb_port }}:27017"
+    volumes:
+      - "{{ mongodb_data_dir }}:/data/db"
+      - "{{ mongodb_config_dir }}:/etc/mongodb"
+      - "{{ mongodb_keyfile_path }}:/etc/mongodb/keyfile"
+    env:
+      MONGO_INITDB_ROOT_USERNAME: "{{ mongodb_admin_user }}"
+      MONGO_INITDB_ROOT_PASSWORD: "{{ mongodb_admin_password }}"
+    command: >
+      mongod --config /etc/mongodb/mongod.conf
+      --replSet {{ mongodb_replica_name }}
+      --keyFile /etc/mongodb/keyfile
+      --bind_ip_all

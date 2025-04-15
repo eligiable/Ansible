@@ -1,0 +1,9 @@
+---
+- name: Deploy MongoDB Replica Set with Docker
+  hosts: mongodb_nodes
+  become: yes
+  gather_facts: yes
+  serial: 1  # Deploy one node at a time for replica set initialization
+
+  roles:
+    - role: mongodb-replica

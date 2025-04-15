@@ -1,0 +1,9 @@
+---
+- name: Include Docker setup tasks
+  include_tasks: docker.yml
+
+- name: Include MongoDB deployment tasks
+  include_tasks: mongodb.yml
+
+- name: Include Replica set configuration tasks
+  include_tasks: replica.yml

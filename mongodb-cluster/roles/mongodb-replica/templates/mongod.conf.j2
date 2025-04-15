@@ -1,0 +1,21 @@
+# MongoDB Configuration
+storage:
+  dbPath: /data/db
+  journal:
+    enabled: true
+
+systemLog:
+  destination: file
+  logAppend: true
+  path: /var/log/mongodb/mongod.log
+
+net:
+  port: 27017
+  bindIp: 0.0.0.0
+
+security:
+  authorization: enabled
+  keyFile: /etc/mongodb/keyfile
+
+replication:
+  replSetName: {{ mongodb_replica_name }}
