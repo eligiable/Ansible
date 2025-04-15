@@ -1,0 +1,12 @@
+---
+# Common variables for all hosts
+timezone: UTC
+admin_user: magento_admin
+sys_packages:
+  - git
+  - unzip
+  - htop
+  - tmux
+  - fail2ban
+  - ufw
+  - curl

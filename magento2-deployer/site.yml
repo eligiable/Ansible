@@ -1,0 +1,22 @@
+---
+- name: Configure all servers
+  hosts: all
+  roles:
+    - common
+
+- name: Configure database server
+  hosts: db
+  roles:
+    - mysql
+
+- name: Configure Redis server
+  hosts: redis
+  roles:
+    - redis
+
+- name: Configure application servers
+  hosts: app
+  roles:
+    - nginx
+    - php
+    - magento

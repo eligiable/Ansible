@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+bind {{ redis_bind }}
+port {{ redis_port }}
+protected-mode {{ redis_protected_mode }}
+requirepass {{ redis_password }}
+
+maxmemory {{ redis_maxmemory }}
+maxmemory-policy {{ redismemory_policy }}
+maxmemory-samples 5
+
+save 900 1
+save 300 10
+save 60 10000
+
+stop-writes-on-bgsave-error yes
+rdbcompression yes
+rdbchecksum yes
+dbfilename dump.rdb
+dir /var/lib/redis

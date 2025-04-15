@@ -1,0 +1,59 @@
+; {{ ansible_managed }}
+[PHP]
+engine = On
+short_open_tag = Off
+precision = 14
+output_buffering = 4096
+zlib.output_compression = Off
+implicit_flush = Off
+unserialize_callback_func =
+serialize_precision = -1
+disable_functions = "exec,passthru,shell_exec,system,proc_open,popen,curl_exec,curl_multi_exec,parse_ini_file,show_source"
+disable_classes = ""
+memory_limit = {{ php_memory_limit }}
+error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT
+display_errors = Off
+display_startup_errors = Off
+log_errors = On
+log_errors_max_len = 1024
+ignore_repeated_errors = Off
+ignore_repeated_source = Off
+report_memleaks = On
+track_errors = Off
+html_errors = Off
+variables_order = "GPCS"
+request_order = "GP"
+register_argc_argv = Off
+auto_globals_jit = On
+post_max_size = 256M
+auto_prepend_file =
+auto_append_file =
+default_mimetype = "text/html"
+default_charset = "UTF-8"
+doc_root =
+user_dir =
+enable_dl = Off
+file_uploads = On
+upload_max_filesize = 256M
+max_file_uploads = 20
+allow_url_fopen = Off
+allow_url_include = Off
+default_socket_timeout = 60
+
+[Date]
+date.timezone = {{ timezone }}
+
+[opcache]
+opcache.enable=1
+opcache.enable_cli=0
+opcache.memory_consumption=256
+opcache.interned_strings_buffer=16
+opcache.max_accelerated_files=20000
+opcache.max_wasted_percentage=5
+opcache.use_cwd=1
+opcache.validate_timestamps=0
+opcache.revalidate_freq=60
+opcache.revalidate_path=0
+opcache.save_comments=1
+opcache.load_comments=1
+opcache.fast_shutdown=1

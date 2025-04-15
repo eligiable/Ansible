@@ -1,0 +1,17 @@
+---
+# Database server variables
+mysql_root_password: "!SecureDBRootPass123"
+mysql_version: "8.0"
+magento_db_name: "magento"
+magento_db_user: "magento"
+magento_db_password: "!MagentoDBPass123"
+magento_db_host: "db.example.com"
+
+innodb_buffer_pool_size: "4G"
+innodb_log_file_size: "512M"
+
+mysql_bind_address: "0.0.0.0"
+mysql_allow_remote: true
+mysql_allowed_hosts:
+  - "app1.example.com"
+  - "app2.example.com"

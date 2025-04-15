@@ -1,0 +1,23 @@
+---
+# Application server variables
+magento_version: "2.4.6"
+magento_admin_user: "admin"
+magento_admin_password: "!SecurePassword123"
+magento_admin_email: "admin@example.com"
+magento_base_url: "https://magento.example.com"
+magento_backend_frontname: "admin_123"
+
+php_version: "8.2"
+php_memory_limit: "2G"
+php_opcache_enable: 1
+php_opcache_memory_consumption: 256
+
+nginx_worker_processes: "auto"
+nginx_worker_connections: 1024
+nginx_keepalive_timeout: 65
+
+enable_firewall: true
+allowed_ports:
+  - "22"
+  - "80"
+  - "443"

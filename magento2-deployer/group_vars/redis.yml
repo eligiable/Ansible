@@ -1,0 +1,12 @@
+---
+# Redis server variables
+redis_bind: "0.0.0.0"
+redis_port: 6379
+redis_maxmemory: "2gb"
+redis_maxmemory_policy: "allkeys-lru"
+redis_password: "!SecureRedisPass123"
+
+redis_protected_mode: "yes"
+redis_allowed_hosts:
+  - "app1.example.com"
+  - "app2.example.com"

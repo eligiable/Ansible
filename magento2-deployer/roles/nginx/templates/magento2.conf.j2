@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+upstream fastcgi_backend {
+    server unix:/var/run/php/php{{ php_version }}-fpm.sock;
+}
+
+server {
+    listen 80;
+    server_name {{ magento_base_url | regex_replace('https?://', '') }};
+    set $MAGE_ROOT /var/www/magento/current;
+    set $MAGE_MODE production;
+
+    include /var/www/magento/current/nginx.conf.sample;
+}

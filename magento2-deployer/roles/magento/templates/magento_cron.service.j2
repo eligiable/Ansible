@@ -1,0 +1,14 @@
+[Unit]
+Description=Magento 2 Cron Service
+After=network.target
+
+[Service]
+Type=simple
+User=magento
+Group=www-data
+ExecStart=/usr/bin/php /var/www/magento/current/bin/magento cron:run
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target

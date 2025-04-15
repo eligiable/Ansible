@@ -1,0 +1,47 @@
+---
+- name: Add PHP repository (Debian)
+  apt_repository:
+    repo: "ppa:ondrej/php"
+  when: ansible_os_family == 'Debian'
+
+- name: Install PHP and extensions
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "php{{ php_version }}-fpm"
+    - "php{{ php_version }}-cli"
+    - "php{{ php_version }}-mysql"
+    - "php{{ php_version }}-curl"
+    - "php{{ php_version }}-gd"
+    - "php{{ php_version }}-intl"
+    - "php{{ php_version }}-mbstring"
+    - "php{{ php_version }}-soap"
+    - "php{{ php_version }}-xml"
+    - "php{{ php_version }}-zip"
+    - "php{{ php_version }}-bcmath"
+    - "php{{ php_version }}-opcache"
+    - "php{{ php_version }}-redis"
+
+- name: Ensure PHP-FPM is running and enabled on boot
+  service:
+    name: "php{{ php_version }}-fpm"
+    state: started
+    enabled: yes
+
+- name: Configure PHP-FPM pool
+  template:
+    src: www.conf.j2
+    dest: "/etc/php/{{ php_version }}/fpm/pool.d/www.conf"
+  notify: restart php-fpm
+
+- name: Configure PHP settings
+  template:
+    src: php.ini.j2
+    dest: "/etc/php/{{ php_version }}/fpm/php.ini"
+  notify: restart php-fpm
+
+- name: Configure PHP CLI settings
+  template:
+    src: php-cli.ini.j2
+    dest: "/etc/php/{{ php_version }}/cli/php.ini"

@@ -1,0 +1,170 @@
+---
+- name: Create Magento system user
+  user:
+    name: magento
+    group: www-data
+    shell: /bin/bash
+    home: /var/www/magento
+    system: yes
+
+- name: Create Magento directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: magento
+    group: www-data
+    mode: 0755
+  loop:
+    - /var/www/magento
+    - /var/www/magento/shared
+    - /var/www/magento/shared/var
+    - /var/www/magento/shared/pub/media
+    - /var/www/magento/shared/pub/static
+
+- name: Download Magento 2
+  unarchive:
+    src: "https://github.com/magento/magento2/archive/{{ magento_version }}.zip"
+    dest: /var/www/magento/current
+    remote_src: yes
+    owner: magento
+    group: www-data
+  register: magento_download
+  until: magento_download is succeeded
+  retries: 3
+  delay: 10
+
+- name: Install Composer
+  get_url:
+    url: https://getcomposer.org/installer
+    dest: /tmp/composer-setup.php
+    mode: 0755
+
+- name: Run Composer setup
+  command: php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
+  args:
+    creates: /usr/local/bin/composer
+
+- name: Install Magento dependencies
+  composer:
+    command: install
+    working_dir: /var/www/magento/current
+    no_dev: yes
+    optimize_autoloader: yes
+  become: yes
+  become_user: magento
+
+- name: Set up shared directories
+  file:
+    src: "/var/www/magento/shared/{{ item }}"
+    dest: "/var/www/magento/current/{{ item }}"
+    state: link
+    owner: magento
+    group: www-data
+  loop:
+    - var
+    - pub/media
+    - pub/static
+
+- name: Install Magento
+  command: >
+    php /var/www/magento/current/bin/magento setup:install
+    --base-url="{{ magento_base_url }}"
+    --db-host="{{ magento_db_host }}"
+    --db-name="{{ magento_db_name }}"
+    --db-user="{{ magento_db_user }}"
+    --db-password="{{ magento_db_password }}"
+    --admin-firstname="Admin"
+    --admin-lastname="User"
+    --admin-email="{{ magento_admin_email }}"
+    --admin-user="{{ magento_admin_user }}"
+    --admin-password="{{ magento_admin_password }}"
+    --language="en_US"
+    --currency="USD"
+    --timezone="America/Chicago"
+    --use-rewrites=1
+    --backend-frontname="{{ magento_backend_frontname }}"
+    --search-engine="elasticsearch7"
+    --elasticsearch-host="elasticsearch.example.com"
+    --elasticsearch-port=9200
+  args:
+    chdir: /var/www/magento/current
+    creates: /var/www/magento/current/app/etc/env.php
+  become: yes
+  become_user: magento
+
+- name: Configure Redis for sessions
+  command: >
+    php /var/www/magento/current/bin/magento setup:config:set
+    --session-save=redis
+    --session-save-redis-host="{{ hostvars[groups['redis'][0]].ansible_host }}"
+    --session-save-redis-port=6379
+    --session-save-redis-db=0
+    --session-save-redis-password="{{ redis_password }}"
+  args:
+    chdir: /var/www/magento/current
+  become: yes
+  become_user: magento
+
+- name: Configure Redis for default cache
+  command: >
+    php /var/www/magento/current/bin/magento setup:config:set
+    --cache-backend=redis
+    --cache-backend-redis-server="{{ hostvars[groups['redis'][0]].ansible_host }}"
+    --cache-backend-redis-port=6379
+    --cache-backend-redis-db=1
+    --cache-backend-redis-password="{{ redis_password }}"
+  args:
+    chdir: /var/www/magento/current
+  become: yes
+  become_user: magento
+
+- name: Configure Redis for page cache
+  command: >
+    php /var/www/magento/current/bin/magento setup:config:set
+    --page-cache=redis
+    --page-cache-redis-server="{{ hostvars[groups['redis'][0]].ansible_host }}"
+    --page-cache-redis-port=6379
+    --page-cache-redis-db=2
+    --page-cache-redis-password="{{ redis_password }}"
+  args:
+    chdir: /var/www/magento/current
+  become: yes
+  become_user: magento
+
+- name: Set production mode
+  command: php /var/www/magento/current/bin/magento deploy:mode:set production
+  args:
+    chdir: /var/www/magento/current
+  become: yes
+  become_user: magento
+
+- name: Set correct permissions
+  command: php /var/www/magento/current/bin/magento setup:permissions
+  args:
+    chdir: /var/www/magento/current
+  become: yes
+  become_user: magento
+
+- name: Enable cron jobs
+  cron:
+    name: "Magento cron"
+    minute: "*/5"
+    job: "cd /var/www/magento/current && /usr/bin/php bin/magento cron:run | grep -v \"Ran jobs by schedule\" >> var/log/magento.cron.log"
+    user: magento
+
+- name: Set up Magento cron service
+  template:
+    src: magento_cron.service.j2
+    dest: /etc/systemd/system/magento_cron.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload systemd
+    - restart magento_cron
+
+- name: Enable and start Magento cron service
+  systemd:
+    name: magento_cron
+    state: started
+    enabled: yes

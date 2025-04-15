@@ -1,0 +1,20 @@
+---
+- name: restart redis
+  service:
+    name: redis-server
+    state: restarted
+    enabled: yes
+
+- name: flush redis cache
+  command: redis-cli -a "{{ redis_password }}" FLUSHALL
+  ignore_errors: yes
+  when: redis_flush_needed
+
+- name: reload redis config
+  command: redis-cli -a "{{ redis_password }}" CONFIG RELOAD
+  when: redis_config_changed
+
+- name: verify redis connectivity
+  command: redis-cli -a "{{ redis_password }}" PING
+  register: redis_ping
+  changed_when: false

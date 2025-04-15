@@ -1,0 +1,26 @@
+# {{ ansible_managed }}
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 3
+bantime = 3600
+findtime = 600
+ignoreip = 127.0.0.1/8 ::1
+
+[nginx-http-auth]
+enabled = true
+filter = nginx-http-auth
+port = http,https
+logpath = /var/log/nginx/error.log
+maxretry = 3
+bantime = 86400
+
+[recidive]
+enabled = true
+filter = recidive
+logpath = /var/log/fail2ban.log
+bantime = 604800  # 1 week
+findtime = 86400  # 1 day
+maxretry = 5

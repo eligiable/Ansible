@@ -1,0 +1,6 @@
+---
+# Database server specific overrides
+ansible_host: 192.168.1.20
+mysql_replication_role: "master"  # For future replication setup
+backup_enabled: true
+backup_schedule: "0 3 * * *"

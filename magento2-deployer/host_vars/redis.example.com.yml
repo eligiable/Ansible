@@ -1,0 +1,9 @@
+---
+# Redis server specific overrides
+ansible_host: 192.168.1.30
+redis_maxmemory_policy: "allkeys-lru"
+redis_appendonly: "yes"
+redis_save_schedule:
+  - "900 1"
+  - "300 10"
+  - "60 10000"

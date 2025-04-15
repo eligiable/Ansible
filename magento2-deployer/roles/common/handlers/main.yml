@@ -1,0 +1,21 @@
+---
+- name: restart sshd
+  service:
+    name: sshd
+    state: restarted
+    enabled: yes
+
+- name: restart fail2ban
+  service:
+    name: fail2ban
+    state: restarted
+    enabled: yes
+
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: restart ufw
+  service:
+    name: ufw
+    state: reloaded

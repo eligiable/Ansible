@@ -1,0 +1,55 @@
+---
+- name: Install MySQL server
+  apt:
+    name: "mysql-server-{{ mysql_version }}"
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Install MariaDB server
+  yum:
+    name: "mariadb-server"
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Ensure MySQL is running and enabled on boot
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+
+- name: Secure MySQL installation
+  mysql_secure_installation:
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    root_password: "{{ mysql_root_password }}"
+    remove_anonymous_users: yes
+    remove_test_db: yes
+
+- name: Configure MySQL bind address
+  template:
+    src: mysqld.cnf.j2
+    dest: /etc/mysql/mysql.conf.d/mysqld.cnf
+  notify: restart mysql
+
+- name: Create Magento database
+  mysql_db:
+    name: "{{ magento_db_name }}"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Create Magento database user
+  mysql_user:
+    name: "{{ magento_db_user }}"
+    password: "{{ magento_db_password }}"
+    priv: "{{ magento_db_name }}.*:ALL"
+    host: "%"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Configure MySQL performance tuning
+  template:
+    src: mysql-performance.cnf.j2
+    dest: /etc/mysql/conf.d/mysql-performance.cnf
+  notify: restart mysql

@@ -1,0 +1,40 @@
+---
+- name: restart php-fpm
+  service:
+    name: "php{{ php_version }}-fpm"
+    state: restarted
+
+- name: flush magento cache
+  command: "php /var/www/magento/current/bin/magento cache:flush"
+  args:
+    chdir: /var/www/magento/current
+  become: yes
+  become_user: magento
+
+- name: setup magento upgrade
+  command: "php /var/www/magento/current/bin/magento setup:upgrade"
+  args:
+    chdir: /var/www/magento/current
+  become: yes
+  become_user: magento
+
+- name: reindex magento
+  command: "php /var/www/magento/current/bin/magento indexer:reindex"
+  args:
+    chdir: /var/www/magento/current
+  become: yes
+  become_user: magento
+
+- name: deploy magento static content
+  command: >
+    php /var/www/magento/current/bin/magento setup:static-content:deploy -f
+    {{ '--jobs=4' if ansible_processor_vcpus > 4 else '--jobs=2' }}
+  args:
+    chdir: /var/www/magento/current
+  become: yes
+  become_user: magento
+
+- name: restart magento_cron
+  systemd:
+    name: magento_cron
+    state: restarted

@@ -1,0 +1,4 @@
+---
+# App server 1 specific overrides
+ansible_host: 192.168.1.10
+magento_deploy_strategy: "primary"  # For multi-server setups

@@ -1,0 +1,41 @@
+---
+- name: Install Redis server
+  package:
+    name: redis-server
+    state: present
+
+- name: Ensure Redis is running and enabled on boot
+  service:
+    name: redis-server
+    state: started
+    enabled: yes
+
+- name: Configure Redis
+  template:
+    src: redis.conf.j2
+    dest: /etc/redis/redis.conf
+    owner: redis
+    group: redis
+    mode: 0640
+  notify: restart redis
+
+- name: Configure Redis security
+  lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: "^{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  with_items:
+    - { regexp: '^requirepass', line: 'requirepass {{ redis_password }}' }
+    - { regexp: '^protected-mode', line: 'protected-mode {{ redis_protected_mode }}' }
+    - { regexp: '^bind', line: 'bind {{ redis_bind }}' }
+  notify: restart redis
+
+- name: Configure Redis firewall rules
+  ufw:
+    rule: allow
+    from_ip: "{{ item }}"
+    port: "{{ redis_port }}"
+    proto: tcp
+  loop: "{{ redis_allowed_hosts }}"
+  when: enable_firewall

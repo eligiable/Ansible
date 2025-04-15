@@ -1,0 +1,21 @@
+[PHP]
+engine = On
+short_open_tag = Off
+precision = 14
+output_buffering = 4096
+zlib.output_compression = Off
+implicit_flush = Off
+unserialize_callback_func =
+serialize_precision = -1
+
+[Date]
+date.timezone = {{ timezone }}
+
+[opcache]
+opcache.enable={{ php_opcache_enable }}
+opcache.memory_consumption={{ php_opcache_memory_consumption }}
+opcache.interned_strings_buffer=16
+opcache.max_accelerated_files=20000
+opcache.validate_timestamps=0
+opcache.save_comments=1
+opcache.enable_cli=1

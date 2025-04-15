@@ -1,0 +1,57 @@
+---
+- name: Update and upgrade apt packages
+  apt:
+    update_cache: yes
+    upgrade: dist
+  when: ansible_os_family == 'Debian'
+
+- name: Update and upgrade yum packages
+  yum:
+    name: '*'
+    state: latest
+  when: ansible_os_family == 'RedHat'
+
+- name: Install common system packages
+  package:
+    name: "{{ sys_packages }}"
+    state: present
+
+- name: Set timezone
+  timezone:
+    name: "{{ timezone }}"
+
+- name: Create admin user
+  user:
+    name: "{{ admin_user }}"
+    groups: sudo
+    append: yes
+    shell: /bin/bash
+    password: "{{ 'Password123!' | password_hash('sha512') }}"
+
+- name: Configure SSH hardening
+  template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart sshd
+
+- name: Enable UFW firewall
+  ufw:
+    state: enabled
+    policy: deny
+  when: enable_firewall
+
+- name: Allow ports through firewall
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+  loop: "{{ allowed_ports }}"
+  when: enable_firewall
+
+- name: Configure fail2ban
+  template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+  notify: restart fail2ban

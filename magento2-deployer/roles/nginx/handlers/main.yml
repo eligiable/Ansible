@@ -1,0 +1,17 @@
+---
+- name: restart nginx
+  service:
+    name: nginx
+    state: restarted
+    enabled: yes
+
+- name: reload nginx
+  service:
+    name: nginx
+    state: reloaded
+
+- name: test nginx config
+  command: nginx -t
+  register: nginx_test
+  changed_when: false
+  notify: reload nginx
