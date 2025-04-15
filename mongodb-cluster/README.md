@@ -5,7 +5,7 @@ This project automates the deployment of a MongoDB replica set across three node
 ## Directory Structure
 
 ```
-mongodb-replica-ansible/
+mongodb-cluster/
 ├── inventories/
 │   ├── production/
 │   │   ├── hosts.ini          # Inventory file defining the 3 MongoDB nodes
