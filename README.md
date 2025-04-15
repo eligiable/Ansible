@@ -1,22 +1,14 @@
 # Ansible
 Ansible Scripts to Automate
 
-### Deploy a JAR (Tomcat) using Ansible on Docker
+### Kafka Cluster
 
-> Ansible Automation Script to Deploy a JAR (Tomcat) Service on Docker.
+> Multi-node Kafka and Zookeeper cluster, automates the setup and configuration of a distributed Apache Kafka environment with Zookeeper support.
 
-### Magento2 via Ansible
+### Magento2 Deployer
 
-> Ansible Automation Script to Deploy Bais Installation of Magento2.
+> Three-tier Magento 2 deployment using Ansible, provision and configure a scalable Magento 2 stack with separate tiers for web, application, and database services.
 
-### Magento2 via Ansible - Development Env.
+### MongoDB Cluster
 
-> Ansible Automation Script to Deploy Customized Development Environment Installation of Magento2.
-
-### Kafka Deployment to Multi Nodes
-
-> Ansible Automation Script to Deploy Kafka on a Multi Node Environment with 3 Kafka Nodes and 3 Zookeepers (2 on each Instance/VN).
-
-### Update Ubuntu Servers from Ansible including on AWS and OpenStack
-
-> Ansible Automation Script to Deploy Customized Development Environment Installation of Magento2.
+> MongoDB replica set using Docker, easily set up a MongoDB cluster with replica sets inside Docker containers for high availability and scalability.
